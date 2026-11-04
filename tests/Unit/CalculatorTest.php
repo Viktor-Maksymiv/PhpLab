@@ -1,12 +1,9 @@
 <?php
 
-
 namespace Tests\Unit;
-
 
 use App\Services\Calculator;
 use PHPUnit\Framework\TestCase;
-
 
 class CalculatorTest extends TestCase
 {
@@ -15,7 +12,6 @@ class CalculatorTest extends TestCase
         $calculator = new Calculator;
         $this->assertEquals(5, $calculator->add(2, 3));
     }
-
 
     public function test_subtract()
     {
