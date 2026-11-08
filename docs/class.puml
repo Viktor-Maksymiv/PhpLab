@@ -1,0 +1,181 @@
+@startuml
+class User {
+  +id: Int
+  +name: String
+  +email: String
+  +password: String
+  +role: String
+  +register(): void
+  +login(): Boolean
+  +logout(): void
+  +updateProfile(data: Array): void
+  +changePassword(newPassword: String): Boolean
+}
+
+class Customer {
+  +phone: String
+  +birthDate: Date
+  +loyaltyPoints: Int
+  +city: String
+  +isSubscribed: Boolean
+  +viewOrders(): Array
+  +bookSeats(showtimeId: Int, seatIds: Array): Order
+  +cancelOrder(orderId: Int): Boolean
+  +addPoints(points: Int): void
+  +subscribeToNews(): void
+}
+
+class Cashier {
+  +employeeCode: String
+  +cashDeskNumber: Int
+  +shiftStart: DateTime
+  +shiftEnd: DateTime
+  +soldTicketsCount: Int
+  +sellTicket(showtimeId: Int, seatId: Int): Ticket
+  +validateTicket(qrCode: String): Boolean
+  +refundTicket(ticketId: Int): Boolean
+  +openShift(): void
+  +closeShift(): void
+}
+
+class Admin {
+  +accessLevel: Int
+  +department: String
+  +hiredAt: Date
+  +lastReportAt: DateTime
+  +managedHallsCount: Int
+  +createMovie(data: Array): Movie
+  +scheduleShowtime(movieId: Int, hallId: Int, startAt: DateTime): Showtime
+  +setTicketPrice(showtimeId: Int, price: Float): void
+  +generateSalesReport(fromDate: Date, toDate: Date): Array
+  +blockUser(userId: Int): void
+}
+
+class Movie {
+  +id: Int
+  +title: String
+  +durationMinutes: Int
+  +ageRating: String
+  +releaseDate: Date
+  +posterUrl: String
+  +getShowtimes(day: Date): Array
+  +addGenre(genreId: Int): void
+  +removeGenre(genreId: Int): void
+  +isNowShowing(): Boolean
+  +updateInfo(data: Array): void
+}
+
+class Genre {
+  +id: Int
+  +name: String
+  +slug: String
+  +description: String
+  +isActive: Boolean
+  +getMovies(): Array
+  +rename(newName: String): void
+  +activate(): void
+  +deactivate(): void
+  +countMovies(): Int
+}
+
+class Hall {
+  +id: Int
+  +name: String
+  +capacity: Int
+  +format: String
+  +rowsCount: Int
+  +getSeats(): Array
+  +getFreeSeats(showtimeId: Int): Array
+  +addSeat(rowNumber: Int, seatNumber: Int): Seat
+  +isAvailable(startAt: DateTime, endAt: DateTime): Boolean
+  +updateFormat(newFormat: String): void
+}
+
+class Seat {
+  +id: Int
+  +hallId: Int
+  +rowNumber: Int
+  +seatNumber: Int
+  +type: String
+  +isFree(showtimeId: Int): Boolean
+  +getPriceMultiplier(): Float
+  +changeType(newType: String): void
+  +getLabel(): String
+  +block(): void
+}
+
+class Showtime {
+  +id: Int
+  +movieId: Int
+  +hallId: Int
+  +startAt: DateTime
+  +basePrice: Float
+  +status: String
+  +getFreeSeats(): Array
+  +getOccupancy(): Float
+  +calculatePrice(seatType: String): Float
+  +cancel(): void
+  +isStarted(): Boolean
+}
+
+class Order {
+  +id: Int
+  +customerId: Int
+  +totalAmount: Float
+  +status: String
+  +createdAt: DateTime
+  +expiresAt: DateTime
+  +addTicket(seatId: Int): Ticket
+  +calculateTotal(): Float
+  +applyPromoCode(code: String): Boolean
+  +confirmPayment(): void
+  +cancel(): void
+  +isExpired(): Boolean
+}
+
+class Ticket {
+  +id: Int
+  +orderId: Int
+  +showtimeId: Int
+  +seatId: Int
+  +price: Float
+  +qrCode: String
+  +status: String
+  +generateQrCode(): String
+  +toPdf(): String
+  +markAsUsed(): void
+  +isValid(): Boolean
+  +refund(): Boolean
+}
+
+class Payment {
+  +id: Int
+  +orderId: Int
+  +amount: Float
+  +method: String
+  +transactionId: String
+  +paidAt: DateTime
+  +process(): Boolean
+  +refund(): Boolean
+  +checkStatus(): String
+  +generateReceipt(): String
+  +isSuccessful(): Boolean
+}
+
+Customer --|> User : наслідує
+Cashier --|> User : наслідує
+Admin --|> User : наслідує
+
+Customer "1" --> "0..*" Order : оформлює
+Order "0..*" --> "1" Showtime : на сеанс
+Order "1" --> "0..*" Payment : оплачується
+Showtime "0..*" --> "1" Movie : показує
+Showtime "0..*" --> "1" Hall : відбувається в
+Ticket "0..*" --> "1" Seat : закріплює місце
+Admin "1" --> "0..*" Showtime : планує
+
+Movie "0..*" o-- "1..*" Genre : належить до
+
+Order "1" *-- "1..*" Ticket : містить
+Hall "1" *-- "1..*" Seat : складається з
+@enduml
