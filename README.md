@@ -22,3 +22,10 @@ composer install
 ./vendor/bin/pint --test
 ./vendor/bin/phpunit tests/Unit
 ```
+
+## Структура проєкту
+
+
+- app/Services/Calculator.php: клас Calculator
+- tests/Unit/CalculatorTest.php: модульні тести
+- .github/workflows/php-ci.yml: CI-пайплайн
