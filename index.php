@@ -1,66 +1,96 @@
 <?php
 
 declare(strict_types=1);
-use Faker\Factory;
+
+use App\Core\Database;
+use App\Core\EntityFactory;
+use App\Interfaces\ExportableInterface;
+use App\Services\ConsoleLogger;
+use App\Services\EntityService;
+use App\Services\FileLogger;
+use App\Tasks\Artist;
+use App\Tasks\DepartmentHead;
+use App\Tasks\Genre;
+use App\Tasks\Student;
+use App\Tasks\Teacher;
+use App\Tasks\Triangle;
 
 require_once 'vendor/autoload.php';
-require_once 'app/Services/EntityService.php';
-require_once 'app/Services/DataProcessor.php';
 
-$faker = Factory::create();
-$prices = [];
+echo '--- Singleton ---', PHP_EOL;
+$db = Database::getInstance();
+$sameDb = Database::getInstance();
+echo $db === $sameDb ? 'Екземпляр єдиний' : 'Екземпляри різні', PHP_EOL;
 
-for ($i = 0; $i < 10; $i++) {
-    $prices[] = $faker->numberBetween(80, 400);
+echo PHP_EOL, '--- Factory та абстрактний клас ---', PHP_EOL;
+$movie = EntityFactory::createEntity('movie', [
+    'id' => 1,
+    'createdAt' => '2026-11-09',
+    'title' => 'Inception',
+    'durationMinutes' => 148,
+    'ageRating' => '12+',
+]);
+$user = EntityFactory::createEntity('user', [
+    'id' => 2,
+    'createdAt' => '2026-11-09',
+    'name' => 'Viktor',
+    'email' => 'viktor@example.com',
+    'role' => 'customer',
+]);
+echo $movie->getDetails(), PHP_EOL;
+echo $user->getDetails(), PHP_EOL;
+
+echo PHP_EOL, '--- Інтерфейс і трейт: експорт у JSON ---', PHP_EOL;
+if ($movie instanceof ExportableInterface) {
+    echo $movie->exportToJson(), PHP_EOL;
 }
 
-$minThreshold = 200;
+echo PHP_EOL, '--- Dependency Injection ---', PHP_EOL;
+$service = new EntityService(new ConsoleLogger);
+echo $service->calculateTicketPrice(150.0, 1.5), PHP_EOL;
+echo $service->applyDiscount(1000, 10), PHP_EOL;
 
-$expensiveTickets = array_filter($prices, function ($price) use ($minThreshold) {
-    return $price > $minThreshold;
-});
+try {
+    echo $service->applyDiscount(1000, 150), PHP_EOL;
+} catch (Exception $e) {
+    echo 'Помилка: ', $e->getMessage(), PHP_EOL;
+}
 
-$ticketPrice = calculateTicketPrice(150.0, 1.5);
+$fileService = new EntityService(new FileLogger);
+echo $fileService->calculateTicketPrice(200.0, 2.0), PHP_EOL;
 
-$number = 1234076;
-$text = 'Квиток на ранковий сеанс у залі IMAX';
-?>
-<!DOCTYPE html>
-<html lang="uk">
-<head>
-    <meta charset="UTF-8">
-    <title>Система продажу квитків до кінотеатру</title>
-</head>
-<body>
-    <h1>Електронна система продажу квитків до кінотеатру</h1>
-    <p><a href="app/Models/EntityArray.php">Завдання 1: масиви</a></p>
+echo PHP_EOL, '--- Завдання 6.1: жанр та виконавці ---', PHP_EOL;
+$genre = new Genre([], 1, 'Rock');
+$genre->addArtist(new Artist(1, 'Queen', true, 1970));
+$genre->addArtist(new Artist(2, 'David Bowie', false, 1964));
+$genre->addArtist(new Artist(3, 'Led Zeppelin', true, 1968));
+echo 'Жанр ', $genre->getName(), ', виконавців: ', count($genre->getArtists()), PHP_EOL;
 
-    <h2>Завдання 2: строга типізація</h2>
-    <p>Ціна квитка (базова ціна 150, коефіцієнт місця 1.5): <?= $ticketPrice ?></p>
-    <p>Ціна зі знижкою 10 %: <?= applyDiscount($ticketPrice, 10) ?></p>
+foreach ($genre->searchArtist('led') as $artist) {
+    echo 'Знайдено: ', $artist->name, ', початок діяльності ', $artist->startYear, PHP_EOL;
+}
 
-    <h2>Завдання 3: Faker та замикання</h2>
-    <p>Згенеровані ціни квитків: <?= implode(', ', $prices) ?></p>
-    <p>Поріг: <?= $minThreshold ?></p>
-    <p>Квитки дорожчі за поріг: <?= implode(', ', $expensiveTickets) ?></p>
+$genre->removeArtist(2);
+echo 'Після видалення виконавців: ', count($genre->getArtists()), PHP_EOL;
 
-    <h2>Завдання 4: обробка винятків</h2>
-    <?php
-    try {
-        echo '<p>', applyDiscount(1000, 150), '</p>';
-    } catch (Exception $e) {
-        echo '<p>Помилка: ', $e->getMessage(), '</p>';
-    } finally {
-        echo '<p>Завершення спроби розрахунку.</p>';
-    }
-?>
+echo PHP_EOL, '--- Завдання 6.2: ієрархія ---', PHP_EOL;
+$people = [
+    new Student('Іван Мельник', '2005-09-01', 'інформатики'),
+    new Teacher('Петро Шевчук', '1980-06-20', 'інформатики', 'Бази даних'),
+    new DepartmentHead('Олена Коваль', '1975-03-14', 'інформатики', 'Веб-програмування', 'комп’ютерних наук'),
+];
 
-    <h2>Завдання 5: обробка даних (варіант 2)</h2>
-    <p>Мінімальна цифра числа <?= $number ?>: <?= findMinDigit($number) ?></p>
-    <p>Мінімальна цифра числа 77777: <?= findMinDigit(77777) ?></p>
-    <p>Вхідний рядок: <?= $text ?></p>
-    <p>Перше й останнє слово поміняно місцями: <?= swapFirstAndLastWord($text) ?></p>
-    <p>Рядок abcdxyz упорядкований за зростанням: <?= isSortedAscending('abcdxyz') ? 'так' : 'ні' ?></p>
-    <p>Рядок ticket упорядкований за зростанням: <?= isSortedAscending('ticket') ? 'так' : 'ні' ?></p>
-</body>
-</html>
+foreach ($people as $person) {
+    echo $person->getRoleDetails(), PHP_EOL;
+}
+
+echo PHP_EOL, '--- Завдання 6.3: трикутник ---', PHP_EOL;
+$triangle = new Triangle(3, 4, 5);
+echo 'Периметр: ', $triangle->getPerimeter(), PHP_EOL;
+echo 'Площа: ', $triangle->getArea(), PHP_EOL;
+
+try {
+    new Triangle(1, 2, 10);
+} catch (InvalidArgumentException $e) {
+    echo 'Помилка: ', $e->getMessage(), PHP_EOL;
+}
