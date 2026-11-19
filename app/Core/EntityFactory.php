@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace App\Core;
 
-use App\Models\AbstractEntity;
-use App\Models\Movie;
-use App\Models\User;
+use App\Entities\AbstractEntity;
+use App\Entities\Movie;
+use App\Entities\User;
 use InvalidArgumentException;
 
 class EntityFactory

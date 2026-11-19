@@ -30,6 +30,12 @@ jobs:
       - name: Lint code with Pint
         run: ./vendor/bin/pint --test
 
+      - name: Ensure SQLite database exists
+        run: touch database/database.sqlite
+
+      - name: Run migrations and seeders
+        run: php artisan migrate:fresh --seed --force
+
       - name: Run Application Tests
         run: php artisan test
 
