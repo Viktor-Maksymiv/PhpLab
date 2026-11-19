@@ -4,25 +4,29 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Interfaces\ExportableInterface;
-use App\Traits\JsonExportTrait;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Movie extends AbstractEntity implements ExportableInterface
+class Movie extends Model
 {
-    use JsonExportTrait;
+    use HasFactory;
 
-    public function __construct(
-        int $id,
-        string $createdAt,
-        private string $title,
-        private int $durationMinutes,
-        private string $ageRating
-    ) {
-        parent::__construct($id, $createdAt);
+    protected $fillable = ['title', 'duration_minutes', 'age_rating', 'release_date', 'poster_url'];
+
+    protected $casts = [
+        'duration_minutes' => 'integer',
+        'release_date' => 'date:Y-m-d',
+    ];
+
+    public function genres(): BelongsToMany
+    {
+        return $this->belongsToMany(Genre::class)->withTimestamps();
     }
 
-    public function getDetails(): string
+    public function showtimes(): HasMany
     {
-        return "Фільм #{$this->id}: {$this->title}, {$this->durationMinutes} хв, {$this->ageRating}";
+        return $this->hasMany(Showtime::class);
     }
 }

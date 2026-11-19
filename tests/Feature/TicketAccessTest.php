@@ -4,20 +4,18 @@ declare(strict_types=1);
 
 namespace Tests\Feature;
 
+use App\Models\Order;
+use App\Models\Seat;
+use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class TicketAccessTest extends TestCase
 {
-    private array $payload = [
-        'showtime_id' => 101,
-        'seat_id' => 20,
-        'price' => 180,
-        'status' => 'reserved',
-    ];
+    use RefreshDatabase;
 
     public function test_request_without_client_header_is_blocked_by_middleware(): void
     {
-        $response = $this->postJson('/tickets', $this->payload);
+        $response = $this->postJson('/tickets', []);
 
         $response->assertStatus(403)
             ->assertJson(['status' => 'access_denied']);
@@ -25,8 +23,17 @@ class TicketAccessTest extends TestCase
 
     public function test_request_with_valid_header_passes_middleware(): void
     {
+        $order = Order::factory()->create();
+        $seat = Seat::factory()->create();
+
         $response = $this->withHeaders(['X-App-Client' => 'web'])
-            ->postJson('/tickets', $this->payload);
+            ->postJson('/tickets', [
+                'order_id' => $order->id,
+                'showtime_id' => $order->showtime_id,
+                'seat_id' => $seat->id,
+                'price' => 180,
+                'status' => 'reserved',
+            ]);
 
         $response->assertStatus(201);
         $response->assertHeader('X-Security-Policy', 'Enforced');
@@ -35,7 +42,7 @@ class TicketAccessTest extends TestCase
     public function test_invalid_payload_is_rejected_with_validation_error(): void
     {
         $response = $this->withHeaders(['X-App-Client' => 'web'])
-            ->postJson('/tickets', ['showtime_id' => 101]);
+            ->postJson('/tickets', ['price' => 180]);
 
         $response->assertStatus(422);
     }

@@ -4,65 +4,62 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Models\Order;
+use App\Models\Ticket;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class TicketController extends Controller
 {
-    private array $items = [
-        ['id' => 1, 'showtime_id' => 101, 'seat_id' => 15, 'price' => 180.0, 'status' => 'paid'],
-        ['id' => 2, 'showtime_id' => 101, 'seat_id' => 16, 'price' => 180.0, 'status' => 'reserved'],
-        ['id' => 3, 'showtime_id' => 102, 'seat_id' => 7, 'price' => 220.0, 'status' => 'paid'],
-    ];
-
     public function index(): JsonResponse
     {
+        $tickets = Ticket::query()
+            ->with(['showtime.movie:id,title', 'seat:id,hall_id,row_number,seat_number'])
+            ->orderBy('id')
+            ->paginate(15);
+
         return response()->json([
             'status' => 'success',
-            'data' => $this->items,
+            'data' => $tickets,
         ], 200);
     }
 
     public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
-            'showtime_id' => ['required', 'integer', 'min:1'],
-            'seat_id' => ['required', 'integer', 'min:1'],
+            'order_id' => ['required', 'integer', 'exists:orders,id'],
+            'showtime_id' => ['required', 'integer', 'exists:showtimes,id'],
+            'seat_id' => [
+                'required',
+                'integer',
+                'exists:seats,id',
+                Rule::unique('tickets', 'seat_id')->where('showtime_id', $request->input('showtime_id')),
+            ],
             'price' => ['required', 'numeric', 'min:0'],
             'status' => ['required', 'string', 'in:reserved,paid'],
         ]);
 
-        $newItem = [
-            'id' => count($this->items) + 1,
-            'showtime_id' => (int) $validated['showtime_id'],
-            'seat_id' => (int) $validated['seat_id'],
-            'price' => (float) $validated['price'],
-            'status' => $validated['status'],
-            'qr_code' => 'QR-'.Str::upper(Str::random(8)),
-        ];
+        $ticket = Ticket::create($validated + ['qr_code' => 'QR-'.Str::upper(Str::random(8))]);
 
-        $this->items[] = $newItem;
+        Order::query()->whereKey($ticket->order_id)->increment('total_amount', (float) $ticket->price);
+
+        $ticket->load(['showtime.movie:id,title', 'seat:id,hall_id,row_number,seat_number']);
 
         return response()->json([
             'status' => 'created',
-            'data' => $newItem,
+            'data' => $ticket,
         ], 201);
     }
 
     public function show(string $id): JsonResponse
     {
-        $itemId = (int) $id;
-
-        foreach ($this->items as $item) {
-            if ($item['id'] === $itemId) {
-                return response()->json(['status' => 'success', 'data' => $item], 200);
-            }
-        }
+        $ticket = Ticket::with(['order', 'showtime.movie', 'seat'])->findOrFail((int) $id);
 
         return response()->json([
-            'status' => 'error',
-            'message' => 'Квиток із зазначеним ідентифікатором не знайдено.',
-        ], 404);
+            'status' => 'success',
+            'data' => $ticket,
+        ], 200);
     }
 }
