@@ -24,7 +24,7 @@ class TicketDatabaseTest extends TestCase
         $showtime = Showtime::factory()->create(['movie_id' => $movie->id]);
         Ticket::factory()->create(['showtime_id' => $showtime->id]);
 
-        $response = $this->getJson('/tickets');
+        $response = $this->getJson('/api/tickets');
 
         $response->assertStatus(200)
             ->assertJsonFragment(['title' => 'Inception']);
@@ -36,7 +36,7 @@ class TicketDatabaseTest extends TestCase
         $seat = Seat::factory()->create();
 
         $response = $this->withHeaders(['X-App-Client' => 'web'])
-            ->postJson('/tickets', [
+            ->postJson('/api/tickets', [
                 'order_id' => $order->id,
                 'showtime_id' => $order->showtime_id,
                 'seat_id' => $seat->id,
@@ -59,7 +59,7 @@ class TicketDatabaseTest extends TestCase
         $ticket = Ticket::factory()->create();
 
         $response = $this->withHeaders(['X-App-Client' => 'web'])
-            ->postJson('/tickets', [
+            ->postJson('/api/tickets', [
                 'order_id' => $ticket->order_id,
                 'showtime_id' => $ticket->showtime_id,
                 'seat_id' => $ticket->seat_id,
@@ -75,7 +75,7 @@ class TicketDatabaseTest extends TestCase
     {
         $genres = Genre::factory()->count(2)->create();
 
-        $response = $this->postJson('/movies', [
+        $response = $this->postJson('/api/movies', [
             'title' => 'Dune',
             'duration_minutes' => 155,
             'age_rating' => '12+',
@@ -104,7 +104,7 @@ class TicketDatabaseTest extends TestCase
         $kept = $genres->first();
         $removed = $genres->last();
 
-        $response = $this->putJson('/movies/'.$movie->id, ['genres' => [$kept->id]]);
+        $response = $this->putJson('/api/movies/'.$movie->id, ['genres' => [$kept->id]]);
 
         $response->assertStatus(200);
 
@@ -119,7 +119,7 @@ class TicketDatabaseTest extends TestCase
         DB::flushQueryLog();
         DB::enableQueryLog();
 
-        $this->getJson('/tickets')->assertStatus(200);
+        $this->getJson('/api/tickets')->assertStatus(200);
 
         $this->assertLessThanOrEqual(6, count(DB::getQueryLog()));
     }

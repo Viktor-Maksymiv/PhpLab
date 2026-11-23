@@ -5,44 +5,61 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Genre;
-use Illuminate\Http\JsonResponse;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class GenreController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(): View
     {
-        $genres = Genre::query()->withCount('movies')->orderBy('name')->get();
+        $items = Genre::query()->withCount('movies')->orderBy('name')->paginate(10);
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $genres,
-        ], 200);
+        return view('genres.index', compact('items'));
     }
 
-    public function store(Request $request): JsonResponse
+    public function create(): View
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'min:2', 'max:100', 'unique:genres,name'],
-            'slug' => ['required', 'string', 'max:120', 'unique:genres,slug'],
+        return view('genres.create');
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate($this->rules());
+
+        Genre::create($validated);
+
+        return redirect()->route('genres.index')->with('success', 'Жанр успішно створено!');
+    }
+
+    public function edit(Genre $genre): View
+    {
+        return view('genres.edit', compact('genre'));
+    }
+
+    public function update(Request $request, Genre $genre): RedirectResponse
+    {
+        $validated = $request->validate($this->rules($genre));
+
+        $genre->update($validated);
+
+        return redirect()->route('genres.index')->with('success', 'Жанр успішно оновлено!');
+    }
+
+    public function destroy(Genre $genre): RedirectResponse
+    {
+        $genre->delete();
+
+        return redirect()->route('genres.index')->with('success', 'Жанр успішно видалено!');
+    }
+
+    private function rules(?Genre $genre = null): array
+    {
+        return [
+            'name' => ['required', 'string', 'min:2', 'max:100', Rule::unique('genres', 'name')->ignore($genre?->id)],
+            'slug' => ['required', 'string', 'max:120', Rule::unique('genres', 'slug')->ignore($genre?->id)],
             'description' => ['nullable', 'string'],
-        ]);
-
-        $genre = Genre::create($validated);
-
-        return response()->json([
-            'status' => 'created',
-            'data' => $genre,
-        ], 201);
-    }
-
-    public function show(string $id): JsonResponse
-    {
-        $genre = Genre::with('movies:id,title')->findOrFail((int) $id);
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $genre,
-        ], 200);
+        ];
     }
 }

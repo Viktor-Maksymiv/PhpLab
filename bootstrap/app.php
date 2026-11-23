@@ -17,16 +17,7 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->validateCsrfTokens(except: [
-            'tickets',
-            'tickets/*',
-            'genres',
-            'genres/*',
-            'movies',
-            'movies/*',
-            'showtimes',
-            'showtimes/*',
-            'orders',
-            'orders/*',
+            'api/*',
         ]);
 
     })
