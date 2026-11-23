@@ -5,55 +5,95 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Showtime;
-use Illuminate\Http\JsonResponse;
+use App\Support\FormOptions;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class ShowtimeController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(): View
     {
-        $showtimes = Showtime::query()
-            ->with(['movie:id,title', 'hall:id,name,format'])
-            ->orderBy('start_at')
-            ->paginate(15);
+        $items = Showtime::with(['movie', 'hall'])->orderBy('start_at')->paginate(10);
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $showtimes,
-        ], 200);
+        return view('showtimes.index', compact('items'));
     }
 
-    public function store(Request $request): JsonResponse
+    public function show(Showtime $showtime): View
     {
-        $validated = $request->validate([
+        $showtime->load(['movie.genres', 'hall'])->loadCount('tickets');
+
+        return view('showtimes.show', compact('showtime'));
+    }
+
+    public function create(): View
+    {
+        return view('showtimes.create', $this->options());
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $this->normalizeStartAt($request);
+
+        $validated = $request->validate($this->rules($request));
+
+        Showtime::create($validated);
+
+        return redirect()->route('showtimes.index')->with('success', 'Сеанс успішно створено!');
+    }
+
+    public function edit(Showtime $showtime): View
+    {
+        return view('showtimes.edit', ['showtime' => $showtime] + $this->options());
+    }
+
+    public function update(Request $request, Showtime $showtime): RedirectResponse
+    {
+        $this->normalizeStartAt($request);
+
+        $validated = $request->validate($this->rules($request, $showtime));
+
+        $showtime->update($validated);
+
+        return redirect()->route('showtimes.index')->with('success', 'Сеанс успішно оновлено!');
+    }
+
+    public function destroy(Showtime $showtime): RedirectResponse
+    {
+        $showtime->delete();
+
+        return redirect()->route('showtimes.index')->with('success', 'Сеанс успішно видалено!');
+    }
+
+    private function options(): array
+    {
+        return ['movies' => FormOptions::movies(), 'halls' => FormOptions::halls()];
+    }
+
+    private function normalizeStartAt(Request $request): void
+    {
+        $value = $request->input('start_at');
+
+        if (is_string($value) && strtotime($value) !== false) {
+            $request->merge(['start_at' => date('Y-m-d H:i:s', strtotime($value))]);
+        }
+    }
+
+    private function rules(Request $request, ?Showtime $showtime = null): array
+    {
+        return [
             'movie_id' => ['required', 'integer', 'exists:movies,id'],
             'hall_id' => ['required', 'integer', 'exists:halls,id'],
             'start_at' => [
                 'required',
                 'date',
-                'after:now',
-                Rule::unique('showtimes', 'start_at')->where('hall_id', $request->input('hall_id')),
+                Rule::unique('showtimes', 'start_at')
+                    ->where('hall_id', $request->input('hall_id'))
+                    ->ignore($showtime?->id),
             ],
             'base_price' => ['required', 'numeric', 'min:0'],
-        ]);
-
-        $showtime = Showtime::create($validated + ['status' => 'scheduled']);
-        $showtime->load(['movie:id,title', 'hall:id,name,format']);
-
-        return response()->json([
-            'status' => 'created',
-            'data' => $showtime,
-        ], 201);
-    }
-
-    public function show(string $id): JsonResponse
-    {
-        $showtime = Showtime::with(['movie.genres:id,name', 'hall'])->findOrFail((int) $id);
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $showtime,
-        ], 200);
+            'status' => ['required', 'string', 'in:scheduled,cancelled,finished'],
+        ];
     }
 }

@@ -5,61 +5,71 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Models\Order;
-use Illuminate\Http\JsonResponse;
+use App\Support\FormOptions;
+use Illuminate\Contracts\View\View;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
-    public function index(): JsonResponse
+    public function index(): View
     {
-        $orders = Order::query()
-            ->with(['customer:id,name,email', 'showtime.movie:id,title', 'tickets', 'payment'])
-            ->latest('id')
-            ->paginate(15);
+        $items = Order::with(['customer', 'showtime.movie', 'payment'])
+            ->withCount('tickets')
+            ->orderByDesc('id')
+            ->paginate(10);
 
-        return response()->json([
-            'status' => 'success',
-            'data' => $orders,
-        ], 200);
+        return view('orders.index', compact('items'));
     }
 
-    public function store(Request $request): JsonResponse
+    public function show(Order $order): View
     {
-        $validated = $request->validate([
-            'user_id' => ['required', 'integer', 'exists:users,id'],
-            'showtime_id' => ['required', 'integer', 'exists:showtimes,id'],
-        ]);
+        $order->load(['customer', 'showtime.movie', 'showtime.hall', 'tickets.seat', 'payment']);
 
-        $order = Order::create($validated + [
+        return view('orders.show', compact('order'));
+    }
+
+    public function create(): View
+    {
+        return view('orders.create', $this->options());
+    }
+
+    public function store(Request $request): RedirectResponse
+    {
+        $validated = $request->validate($this->rules());
+
+        Order::create($validated + [
             'total_amount' => 0,
-            'status' => 'pending',
             'expires_at' => now()->addMinutes(10),
         ]);
 
-        $order->load(['customer:id,name,email', 'showtime.movie:id,title']);
-
-        return response()->json([
-            'status' => 'created',
-            'data' => $order,
-        ], 201);
+        return redirect()->route('orders.index')->with('success', 'Замовлення успішно створено!');
     }
 
-    public function show(string $id): JsonResponse
+    public function edit(Order $order): View
     {
-        $order = Order::with(['customer:id,name,email', 'showtime.movie:id,title', 'tickets', 'payment'])
-            ->findOrFail((int) $id);
-
-        return response()->json([
-            'status' => 'success',
-            'data' => $order,
-        ], 200);
+        return view('orders.edit', ['order' => $order] + $this->options());
     }
 
-    public function pay(Request $request, string $id): JsonResponse
+    public function update(Request $request, Order $order): RedirectResponse
     {
-        $order = Order::findOrFail((int) $id);
+        $validated = $request->validate($this->rules());
 
+        $order->update($validated);
+
+        return redirect()->route('orders.index')->with('success', 'Замовлення успішно оновлено!');
+    }
+
+    public function destroy(Order $order): RedirectResponse
+    {
+        $order->delete();
+
+        return redirect()->route('orders.index')->with('success', 'Замовлення успішно видалено!');
+    }
+
+    public function pay(Request $request, Order $order): RedirectResponse
+    {
         $validated = $request->validate([
             'method' => ['required', 'string', 'in:card,cash,apple_pay'],
         ]);
@@ -73,11 +83,21 @@ class OrderController extends Controller
         ]);
 
         $order->update(['status' => 'paid']);
-        $order->load('payment');
 
-        return response()->json([
-            'status' => 'created',
-            'data' => $order,
-        ], 201);
+        return redirect()->route('orders.show', $order)->with('success', 'Оплату успішно проведено!');
+    }
+
+    private function options(): array
+    {
+        return ['users' => FormOptions::users(), 'showtimes' => FormOptions::showtimes()];
+    }
+
+    private function rules(): array
+    {
+        return [
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'showtime_id' => ['required', 'integer', 'exists:showtimes,id'],
+            'status' => ['required', 'string', 'in:pending,paid,cancelled'],
+        ];
     }
 }
