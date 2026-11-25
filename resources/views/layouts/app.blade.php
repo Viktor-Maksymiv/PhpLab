@@ -20,9 +20,31 @@
                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('halls.*') ? 'active' : '' }}" href="{{ route('halls.index') }}">Зали</a></li>
                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('seats.*') ? 'active' : '' }}" href="{{ route('seats.index') }}">Місця</a></li>
                     <li class="nav-item"><a class="nav-link {{ request()->routeIs('showtimes.*') ? 'active' : '' }}" href="{{ route('showtimes.index') }}">Сеанси</a></li>
-                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}" href="{{ route('orders.index') }}">Замовлення</a></li>
-                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('tickets.*') ? 'active' : '' }}" href="{{ route('tickets.index') }}">Квитки</a></li>
-                    <li class="nav-item"><a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">Користувачі</a></li>
+                    @auth
+                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('orders.*') ? 'active' : '' }}" href="{{ route('orders.index') }}">Замовлення</a></li>
+                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('tickets.*') ? 'active' : '' }}" href="{{ route('tickets.index') }}">Квитки</a></li>
+                    @endauth
+                    @can('viewAny', App\Models\User::class)
+                        <li class="nav-item"><a class="nav-link {{ request()->routeIs('users.*') ? 'active' : '' }}" href="{{ route('users.index') }}">Користувачі</a></li>
+                    @endcan
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    @guest
+                        <li class="nav-item"><a class="nav-link" href="{{ route('login') }}">Увійти</a></li>
+                        <li class="nav-item"><a class="nav-link" href="{{ route('register') }}">Реєстрація</a></li>
+                    @endguest
+
+                    @auth
+                        <li class="nav-item">
+                            <span class="nav-link text-info">{{ Auth::user()->name }} ({{ Auth::user()->role }})</span>
+                        </li>
+                        <li class="nav-item">
+                            <form action="{{ route('logout') }}" method="POST" class="d-inline">
+                                @csrf
+                                <button type="submit" class="btn btn-link nav-link">Вийти</button>
+                            </form>
+                        </li>
+                    @endauth
                 </ul>
             </div>
         </div>

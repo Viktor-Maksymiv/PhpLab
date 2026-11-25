@@ -5,7 +5,9 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>Користувачі</h1>
-        <a href="{{ route('users.create') }}" class="btn btn-primary">Додати користувача</a>
+        @can('create', App\Models\User::class)
+            <a href="{{ route('users.create') }}" class="btn btn-primary">Додати користувача</a>
+        @endcan
     </div>
 
     <table class="table table-bordered table-striped align-middle">
@@ -27,7 +29,7 @@
                     <td>{{ $item->email }}</td>
                     <td>{{ $item->role }}</td>
                     <td>{{ $item->orders_count }}</td>
-                    <td><x-actions resource="users" :id="$item->id" :show="false" /></td>
+                    <td><x-actions resource="users" :model="$item" :show="false" /></td>
                 </tr>
             @empty
                 <tr>

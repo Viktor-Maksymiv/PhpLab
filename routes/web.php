@@ -15,6 +15,7 @@ use App\Http\Controllers\SeatController;
 use App\Http\Controllers\ShowtimeController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\WebAuthController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -31,15 +32,32 @@ Route::get('/about', function () {
     ]);
 })->name('about');
 
-Route::resource('movies', MovieController::class);
-Route::resource('genres', GenreController::class)->except(['show']);
-Route::resource('halls', HallController::class);
-Route::resource('seats', SeatController::class)->except(['show']);
-Route::resource('showtimes', ShowtimeController::class);
-Route::resource('orders', OrderController::class);
-Route::post('orders/{order}/payment', [OrderController::class, 'pay'])->name('orders.pay');
-Route::resource('tickets', TicketController::class);
-Route::resource('users', UserController::class)->except(['show']);
+Route::middleware('guest')->group(function () {
+    Route::get('/login', [WebAuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [WebAuthController::class, 'login']);
+    Route::get('/register', [WebAuthController::class, 'showRegisterForm'])->name('register');
+    Route::post('/register', [WebAuthController::class, 'register']);
+});
+
+Route::post('/logout', [WebAuthController::class, 'logout'])->middleware('auth')->name('logout');
+
+Route::middleware('auth')->group(function () {
+    Route::resource('movies', MovieController::class)->except(['index', 'show']);
+    Route::resource('genres', GenreController::class)->except(['index', 'show']);
+    Route::resource('halls', HallController::class)->except(['index', 'show']);
+    Route::resource('seats', SeatController::class)->except(['index', 'show']);
+    Route::resource('showtimes', ShowtimeController::class)->except(['index', 'show']);
+    Route::resource('orders', OrderController::class);
+    Route::post('orders/{order}/payment', [OrderController::class, 'pay'])->name('orders.pay');
+    Route::resource('tickets', TicketController::class);
+    Route::resource('users', UserController::class)->except(['show']);
+});
+
+Route::resource('movies', MovieController::class)->only(['index', 'show']);
+Route::resource('genres', GenreController::class)->only(['index']);
+Route::resource('halls', HallController::class)->only(['index', 'show']);
+Route::resource('seats', SeatController::class)->only(['index']);
+Route::resource('showtimes', ShowtimeController::class)->only(['index', 'show']);
 
 Route::prefix('api')->name('api.')->group(function () {
     Route::get('/reports/sales', [ApiSalesReportController::class, 'summary'])->name('reports.sales');

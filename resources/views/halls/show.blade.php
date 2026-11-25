@@ -22,7 +22,9 @@
                 <p class="text-muted">Місця ще не створено.</p>
             @endforelse
 
-            <a href="{{ route('halls.edit', $hall) }}" class="btn btn-warning mt-3">Редагувати</a>
+            @can('update', $hall)
+                <a href="{{ route('halls.edit', $hall) }}" class="btn btn-warning mt-3">Редагувати</a>
+            @endcan
             <a href="{{ route('halls.index') }}" class="btn btn-secondary mt-3">До списку</a>
         </div>
     </div>

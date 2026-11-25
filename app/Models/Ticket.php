@@ -12,7 +12,7 @@ class Ticket extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['order_id', 'showtime_id', 'seat_id', 'price', 'qr_code', 'status'];
+    protected $fillable = ['order_id', 'showtime_id', 'seat_id', 'user_id', 'price', 'qr_code', 'status'];
 
     protected $casts = [
         'price' => 'float',
@@ -31,5 +31,10 @@ class Ticket extends Model
     public function seat(): BelongsTo
     {
         return $this->belongsTo(Seat::class);
+    }
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 }

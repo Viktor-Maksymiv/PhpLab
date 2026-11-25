@@ -21,11 +21,15 @@ class GenreController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', Genre::class);
+
         return view('genres.create');
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create', Genre::class);
+
         $validated = $request->validate($this->rules());
 
         Genre::create($validated);
@@ -35,11 +39,15 @@ class GenreController extends Controller
 
     public function edit(Genre $genre): View
     {
+        $this->authorize('update', $genre);
+
         return view('genres.edit', compact('genre'));
     }
 
     public function update(Request $request, Genre $genre): RedirectResponse
     {
+        $this->authorize('update', $genre);
+
         $validated = $request->validate($this->rules($genre));
 
         $genre->update($validated);
@@ -49,6 +57,8 @@ class GenreController extends Controller
 
     public function destroy(Genre $genre): RedirectResponse
     {
+        $this->authorize('delete', $genre);
+
         $genre->delete();
 
         return redirect()->route('genres.index')->with('success', 'Жанр успішно видалено!');

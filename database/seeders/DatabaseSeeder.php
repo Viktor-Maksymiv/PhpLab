@@ -45,7 +45,14 @@ class DatabaseSeeder extends Seeder
                 ->create(['movie_id' => $movie->id]);
         }
 
-        $users = User::factory()->count(5)->create();
+        User::factory()->create(['name' => 'Адміністратор', 'email' => 'admin@example.com', 'role' => 'admin']);
+        User::factory()->create(['name' => 'Касир', 'email' => 'cashier@example.com', 'role' => 'cashier']);
+
+        $customers = collect([
+            User::factory()->create(['name' => 'Клієнт Перший', 'email' => 'customer1@example.com', 'role' => 'customer']),
+            User::factory()->create(['name' => 'Клієнт Другий', 'email' => 'customer2@example.com', 'role' => 'customer']),
+        ])->merge(User::factory()->count(3)->create(['role' => 'customer']))->values();
+
         $showtimes = Showtime::with('hall.seats')->get();
 
         for ($i = 0; $i < 10; $i++) {
@@ -54,7 +61,7 @@ class DatabaseSeeder extends Seeder
             $seats = $showtime->hall->seats->whereNotIn('id', $taken)->random(2);
 
             $order = Order::factory()->create([
-                'user_id' => $users->random()->id,
+                'user_id' => $customers[$i % $customers->count()]->id,
                 'showtime_id' => $showtime->id,
                 'total_amount' => $showtime->base_price * 2,
                 'status' => 'paid',
@@ -65,6 +72,7 @@ class DatabaseSeeder extends Seeder
                     'order_id' => $order->id,
                     'showtime_id' => $showtime->id,
                     'seat_id' => $seat->id,
+                    'user_id' => $order->user_id,
                     'price' => $showtime->base_price,
                     'status' => 'paid',
                 ]);

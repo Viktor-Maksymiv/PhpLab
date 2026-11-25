@@ -17,8 +17,12 @@
                 <dd class="col-sm-9">{{ number_format($order->total_amount, 2) }} грн</dd>
             </dl>
 
-            <a href="{{ route('orders.edit', $order) }}" class="btn btn-warning">Редагувати</a>
-            <a href="{{ route('tickets.create') }}" class="btn btn-primary">Додати квиток</a>
+            @can('update', $order)
+                <a href="{{ route('orders.edit', $order) }}" class="btn btn-warning">Редагувати</a>
+            @endcan
+            @can('create', App\Models\Ticket::class)
+                <a href="{{ route('tickets.create') }}" class="btn btn-primary">Додати квиток</a>
+            @endcan
             <a href="{{ route('orders.index') }}" class="btn btn-secondary">До списку</a>
         </div>
     </div>
@@ -58,12 +62,14 @@
             транзакція {{ $order->payment->transaction_id }}.
         </div>
     @else
-        <form action="{{ route('orders.pay', $order) }}" method="POST" class="card card-body shadow-sm" style="max-width: 420px;">
-            @csrf
+        @can('pay', $order)
+            <form action="{{ route('orders.pay', $order) }}" method="POST" class="card card-body shadow-sm" style="max-width: 420px;">
+                @csrf
 
-            <x-form.select name="method" label="Спосіб оплати" :options="['card' => 'Картка', 'cash' => 'Готівка', 'apple_pay' => 'Apple Pay']" />
+                <x-form.select name="method" label="Спосіб оплати" :options="['card' => 'Картка', 'cash' => 'Готівка', 'apple_pay' => 'Apple Pay']" />
 
-            <button type="submit" class="btn btn-success">Оплатити {{ number_format($order->total_amount, 2) }} грн</button>
-        </form>
+                <button type="submit" class="btn btn-success">Оплатити {{ number_format($order->total_amount, 2) }} грн</button>
+            </form>
+        @endcan
     @endif
 @endsection

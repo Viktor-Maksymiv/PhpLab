@@ -29,11 +29,15 @@ class MovieController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', Movie::class);
+
         return view('movies.create', ['genres' => FormOptions::genres()]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create', Movie::class);
+
         $validated = $request->validate($this->rules());
 
         $movie = Movie::create(Arr::except($validated, ['genres']));
@@ -44,6 +48,8 @@ class MovieController extends Controller
 
     public function edit(Movie $movie): View
     {
+        $this->authorize('update', $movie);
+
         $movie->load('genres');
 
         return view('movies.edit', ['movie' => $movie, 'genres' => FormOptions::genres()]);
@@ -51,6 +57,8 @@ class MovieController extends Controller
 
     public function update(Request $request, Movie $movie): RedirectResponse
     {
+        $this->authorize('update', $movie);
+
         $validated = $request->validate($this->rules());
 
         $movie->update(Arr::except($validated, ['genres']));
@@ -61,6 +69,8 @@ class MovieController extends Controller
 
     public function destroy(Movie $movie): RedirectResponse
     {
+        $this->authorize('delete', $movie);
+
         $movie->delete();
 
         return redirect()->route('movies.index')->with('success', 'Фільм успішно видалено!');

@@ -5,7 +5,9 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>Жанри</h1>
-        <a href="{{ route('genres.create') }}" class="btn btn-primary">Додати жанр</a>
+        @can('create', App\Models\Genre::class)
+            <a href="{{ route('genres.create') }}" class="btn btn-primary">Додати жанр</a>
+        @endcan
     </div>
 
     <table class="table table-bordered table-striped align-middle">
@@ -25,7 +27,7 @@
                     <td>{{ $item->name }}</td>
                     <td>{{ $item->slug }}</td>
                     <td>{{ $item->movies_count }}</td>
-                    <td><x-actions resource="genres" :id="$item->id" :show="false" /></td>
+                    <td><x-actions resource="genres" :model="$item" :show="false" /></td>
                 </tr>
             @empty
                 <tr>

@@ -27,7 +27,9 @@
                 </dd>
             </dl>
 
-            <a href="{{ route('showtimes.edit', $showtime) }}" class="btn btn-warning">Редагувати</a>
+            @can('update', $showtime)
+                <a href="{{ route('showtimes.edit', $showtime) }}" class="btn btn-warning">Редагувати</a>
+            @endcan
             <a href="{{ route('showtimes.index') }}" class="btn btn-secondary">До списку</a>
         </div>
     </div>

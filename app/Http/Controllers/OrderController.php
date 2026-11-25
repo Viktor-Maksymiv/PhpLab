@@ -13,10 +13,15 @@ use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
-    public function index(): View
+    public function index(Request $request): View
     {
+        $this->authorize('viewAny', Order::class);
+
+        $user = $request->user();
+
         $items = Order::with(['customer', 'showtime.movie', 'payment'])
             ->withCount('tickets')
+            ->when(! $user->isStaff(), fn ($query) => $query->where('user_id', $user->id))
             ->orderByDesc('id')
             ->paginate(10);
 
@@ -25,6 +30,8 @@ class OrderController extends Controller
 
     public function show(Order $order): View
     {
+        $this->authorize('view', $order);
+
         $order->load(['customer', 'showtime.movie', 'showtime.hall', 'tickets.seat', 'payment']);
 
         return view('orders.show', compact('order'));
@@ -32,12 +39,20 @@ class OrderController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', Order::class);
+
         return view('orders.create', $this->options());
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create', Order::class);
+
         $validated = $request->validate($this->rules());
+
+        $user = $request->user();
+
+        $validated['user_id'] = $user->isStaff() ? ($validated['user_id'] ?? $user->id) : $user->id;
 
         Order::create($validated + [
             'total_amount' => 0,
@@ -49,12 +64,20 @@ class OrderController extends Controller
 
     public function edit(Order $order): View
     {
+        $this->authorize('update', $order);
+
         return view('orders.edit', ['order' => $order] + $this->options());
     }
 
     public function update(Request $request, Order $order): RedirectResponse
     {
+        $this->authorize('update', $order);
+
         $validated = $request->validate($this->rules());
+
+        if (! $request->user()->isStaff() || empty($validated['user_id'])) {
+            unset($validated['user_id']);
+        }
 
         $order->update($validated);
 
@@ -63,6 +86,8 @@ class OrderController extends Controller
 
     public function destroy(Order $order): RedirectResponse
     {
+        $this->authorize('delete', $order);
+
         $order->delete();
 
         return redirect()->route('orders.index')->with('success', 'Замовлення успішно видалено!');
@@ -70,6 +95,8 @@ class OrderController extends Controller
 
     public function pay(Request $request, Order $order): RedirectResponse
     {
+        $this->authorize('pay', $order);
+
         $validated = $request->validate([
             'method' => ['required', 'string', 'in:card,cash,apple_pay'],
         ]);
@@ -95,7 +122,7 @@ class OrderController extends Controller
     private function rules(): array
     {
         return [
-            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'user_id' => ['nullable', 'integer', 'exists:users,id'],
             'showtime_id' => ['required', 'integer', 'exists:showtimes,id'],
             'status' => ['required', 'string', 'in:pending,paid,cancelled'],
         ];

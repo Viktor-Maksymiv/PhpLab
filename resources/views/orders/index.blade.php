@@ -5,7 +5,9 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>Замовлення</h1>
-        <a href="{{ route('orders.create') }}" class="btn btn-primary">Додати замовлення</a>
+        @can('create', App\Models\Order::class)
+            <a href="{{ route('orders.create') }}" class="btn btn-primary">Додати замовлення</a>
+        @endcan
     </div>
 
     <table class="table table-bordered table-striped align-middle">
@@ -31,7 +33,7 @@
                     <td>{{ number_format($item->total_amount, 2) }}</td>
                     <td>{{ $item->status }}</td>
                     <td>{{ $item->payment->status ?? '—' }}</td>
-                    <td><x-actions resource="orders" :id="$item->id" /></td>
+                    <td><x-actions resource="orders" :model="$item" /></td>
                 </tr>
             @empty
                 <tr>
