@@ -14,6 +14,8 @@ class UserController extends Controller
 {
     public function index(): View
     {
+        $this->authorize('viewAny', User::class);
+
         $items = User::query()->withCount('orders')->orderBy('name')->paginate(10);
 
         return view('users.index', compact('items'));
@@ -21,12 +23,16 @@ class UserController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', User::class);
+
         return view('users.create');
     }
 
     public function store(Request $request): RedirectResponse
     {
-        $validated = $request->validate($this->rules() + [
+        $this->authorize('create', User::class);
+
+        $validated = $request->validate($this->rules($request) + [
             'password' => ['required', 'string', 'min:8'],
         ]);
 
@@ -37,12 +43,16 @@ class UserController extends Controller
 
     public function edit(User $user): View
     {
+        $this->authorize('update', $user);
+
         return view('users.edit', compact('user'));
     }
 
     public function update(Request $request, User $user): RedirectResponse
     {
-        $validated = $request->validate($this->rules($user) + [
+        $this->authorize('update', $user);
+
+        $validated = $request->validate($this->rules($request, $user) + [
             'password' => ['nullable', 'string', 'min:8'],
         ]);
 
@@ -57,19 +67,28 @@ class UserController extends Controller
 
     public function destroy(User $user): RedirectResponse
     {
+        $this->authorize('delete', $user);
+
         $user->delete();
 
         return redirect()->route('users.index')->with('success', 'Користувача успішно видалено!');
     }
 
-    private function rules(?User $user = null): array
+    private function rules(Request $request, ?User $user = null): array
     {
-        return [
+        $rules = [
             'name' => ['required', 'string', 'min:2', 'max:255'],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user?->id)],
-            'role' => ['required', 'string', 'in:customer,cashier,admin'],
             'phone' => ['nullable', 'string', 'max:20'],
-            'loyalty_points' => ['required', 'integer', 'min:0'],
         ];
+
+        if ($request->user()->isAdmin()) {
+            $rules += [
+                'role' => ['required', 'string', 'in:customer,cashier,admin'],
+                'loyalty_points' => ['required', 'integer', 'min:0'],
+            ];
+        }
+
+        return $rules;
     }
 }

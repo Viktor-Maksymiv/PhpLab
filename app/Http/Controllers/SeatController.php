@@ -22,11 +22,15 @@ class SeatController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', Seat::class);
+
         return view('seats.create', ['halls' => FormOptions::halls()]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create', Seat::class);
+
         $validated = $request->validate($this->rules($request));
 
         Seat::create($validated);
@@ -36,11 +40,15 @@ class SeatController extends Controller
 
     public function edit(Seat $seat): View
     {
+        $this->authorize('update', $seat);
+
         return view('seats.edit', ['seat' => $seat, 'halls' => FormOptions::halls()]);
     }
 
     public function update(Request $request, Seat $seat): RedirectResponse
     {
+        $this->authorize('update', $seat);
+
         $validated = $request->validate($this->rules($request, $seat));
 
         $seat->update($validated);
@@ -50,6 +58,8 @@ class SeatController extends Controller
 
     public function destroy(Seat $seat): RedirectResponse
     {
+        $this->authorize('delete', $seat);
+
         $seat->delete();
 
         return redirect()->route('seats.index')->with('success', 'Місце успішно видалено!');

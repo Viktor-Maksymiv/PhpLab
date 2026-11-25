@@ -9,12 +9,23 @@ use App\Models\Hall;
 use App\Models\Movie;
 use App\Models\Order;
 use App\Models\Ticket;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class CatalogViewTest extends TestCase
 {
     use RefreshDatabase;
+
+    private User $admin;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->admin = User::factory()->create(['role' => 'admin']);
+        $this->actingAs($this->admin);
+    }
 
     private function moviePayload(array $override = []): array
     {

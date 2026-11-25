@@ -5,7 +5,9 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>Сеанси</h1>
-        <a href="{{ route('showtimes.create') }}" class="btn btn-primary">Додати сеанс</a>
+        @can('create', App\Models\Showtime::class)
+            <a href="{{ route('showtimes.create') }}" class="btn btn-primary">Додати сеанс</a>
+        @endcan
     </div>
 
     <table class="table table-bordered table-striped align-middle">
@@ -29,7 +31,7 @@
                     <td>{{ $item->start_at->format('d.m.Y H:i') }}</td>
                     <td>{{ number_format($item->base_price, 2) }}</td>
                     <td>{{ $item->status }}</td>
-                    <td><x-actions resource="showtimes" :id="$item->id" /></td>
+                    <td><x-actions resource="showtimes" :model="$item" /></td>
                 </tr>
             @empty
                 <tr>

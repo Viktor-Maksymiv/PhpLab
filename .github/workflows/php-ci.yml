@@ -36,6 +36,9 @@ jobs:
       - name: Run migrations and seeders
         run: php artisan migrate:fresh --seed --force
 
+      - name: Generate OpenAPI documentation
+        run: php artisan l5-swagger:generate
+
       - name: Run Application Tests
         run: php artisan test
 

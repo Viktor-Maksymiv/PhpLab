@@ -5,7 +5,9 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>Квитки</h1>
-        <a href="{{ route('tickets.create') }}" class="btn btn-primary">Додати квиток</a>
+        @can('create', App\Models\Ticket::class)
+            <a href="{{ route('tickets.create') }}" class="btn btn-primary">Додати квиток</a>
+        @endcan
     </div>
 
     <table class="table table-bordered table-striped align-middle">
@@ -31,7 +33,7 @@
                     <td>{{ number_format($item->price, 2) }}</td>
                     <td>{{ $item->qr_code }}</td>
                     <td>{{ $item->status }}</td>
-                    <td><x-actions resource="tickets" :id="$item->id" /></td>
+                    <td><x-actions resource="tickets" :model="$item" /></td>
                 </tr>
             @empty
                 <tr>

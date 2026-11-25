@@ -29,11 +29,15 @@ class ShowtimeController extends Controller
 
     public function create(): View
     {
+        $this->authorize('create', Showtime::class);
+
         return view('showtimes.create', $this->options());
     }
 
     public function store(Request $request): RedirectResponse
     {
+        $this->authorize('create', Showtime::class);
+
         $this->normalizeStartAt($request);
 
         $validated = $request->validate($this->rules($request));
@@ -45,11 +49,15 @@ class ShowtimeController extends Controller
 
     public function edit(Showtime $showtime): View
     {
+        $this->authorize('update', $showtime);
+
         return view('showtimes.edit', ['showtime' => $showtime] + $this->options());
     }
 
     public function update(Request $request, Showtime $showtime): RedirectResponse
     {
+        $this->authorize('update', $showtime);
+
         $this->normalizeStartAt($request);
 
         $validated = $request->validate($this->rules($request, $showtime));
@@ -61,6 +69,8 @@ class ShowtimeController extends Controller
 
     public function destroy(Showtime $showtime): RedirectResponse
     {
+        $this->authorize('delete', $showtime);
+
         $showtime->delete();
 
         return redirect()->route('showtimes.index')->with('success', 'Сеанс успішно видалено!');

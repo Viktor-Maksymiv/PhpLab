@@ -5,7 +5,9 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>Фільми</h1>
-        <a href="{{ route('movies.create') }}" class="btn btn-primary">Додати фільм</a>
+        @can('create', App\Models\Movie::class)
+            <a href="{{ route('movies.create') }}" class="btn btn-primary">Додати фільм</a>
+        @endcan
     </div>
 
     <table class="table table-bordered table-striped align-middle">
@@ -31,7 +33,7 @@
                         @empty
                             <span class="text-muted small">—</span>
                         @endforelse</td>
-                    <td><x-actions resource="movies" :id="$item->id" /></td>
+                    <td><x-actions resource="movies" :model="$item" /></td>
                 </tr>
             @empty
                 <tr>

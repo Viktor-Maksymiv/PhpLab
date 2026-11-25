@@ -5,7 +5,9 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>Місця</h1>
-        <a href="{{ route('seats.create') }}" class="btn btn-primary">Додати місце</a>
+        @can('create', App\Models\Seat::class)
+            <a href="{{ route('seats.create') }}" class="btn btn-primary">Додати місце</a>
+        @endcan
     </div>
 
     <table class="table table-bordered table-striped align-middle">
@@ -27,7 +29,7 @@
                     <td>{{ $item->row_number }}</td>
                     <td>{{ $item->seat_number }}</td>
                     <td>{{ $item->type }}</td>
-                    <td><x-actions resource="seats" :id="$item->id" :show="false" /></td>
+                    <td><x-actions resource="seats" :model="$item" :show="false" /></td>
                 </tr>
             @empty
                 <tr>

@@ -5,7 +5,9 @@
 @section('content')
     <div class="d-flex justify-content-between align-items-center mb-3">
         <h1>Зали</h1>
-        <a href="{{ route('halls.create') }}" class="btn btn-primary">Додати зал</a>
+        @can('create', App\Models\Hall::class)
+            <a href="{{ route('halls.create') }}" class="btn btn-primary">Додати зал</a>
+        @endcan
     </div>
 
     <table class="table table-bordered table-striped align-middle">
@@ -27,7 +29,7 @@
                     <td>{{ $item->format }}</td>
                     <td>{{ $item->seats_count }}</td>
                     <td>{{ $item->capacity }}</td>
-                    <td><x-actions resource="halls" :id="$item->id" /></td>
+                    <td><x-actions resource="halls" :model="$item" /></td>
                 </tr>
             @empty
                 <tr>

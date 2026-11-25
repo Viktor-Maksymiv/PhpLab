@@ -1,11 +1,15 @@
-@props(['resource', 'id', 'show' => true])
+@props(['resource', 'model', 'show' => true])
 
 @if ($show)
-    <a href="{{ route($resource.'.show', $id) }}" class="btn btn-sm btn-info">Перегляд</a>
+    <a href="{{ route($resource.'.show', $model) }}" class="btn btn-sm btn-info">Перегляд</a>
 @endif
-<a href="{{ route($resource.'.edit', $id) }}" class="btn btn-sm btn-warning">Редаг.</a>
-<form action="{{ route($resource.'.destroy', $id) }}" method="POST" class="d-inline" onsubmit="return confirm('Дійсно видалити?');">
-    @csrf
-    @method('DELETE')
-    <button type="submit" class="btn btn-sm btn-danger">Видалити</button>
-</form>
+@can('update', $model)
+    <a href="{{ route($resource.'.edit', $model) }}" class="btn btn-sm btn-warning">Редаг.</a>
+@endcan
+@can('delete', $model)
+    <form action="{{ route($resource.'.destroy', $model) }}" method="POST" class="d-inline" onsubmit="return confirm('Дійсно видалити?');">
+        @csrf
+        @method('DELETE')
+        <button type="submit" class="btn btn-sm btn-danger">Видалити</button>
+    </form>
+@endcan

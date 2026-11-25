@@ -23,7 +23,9 @@
                 <dd class="col-sm-9">{{ $ticket->status }}</dd>
             </dl>
 
-            <a href="{{ route('tickets.edit', $ticket) }}" class="btn btn-warning">Редагувати</a>
+            @can('update', $ticket)
+                <a href="{{ route('tickets.edit', $ticket) }}" class="btn btn-warning">Редагувати</a>
+            @endcan
             <a href="{{ route('tickets.index') }}" class="btn btn-secondary">До списку</a>
         </div>
     </div>

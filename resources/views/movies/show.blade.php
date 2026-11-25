@@ -31,7 +31,9 @@
                 @endforelse
             </ul>
 
-            <a href="{{ route('movies.edit', $movie) }}" class="btn btn-warning">Редагувати</a>
+            @can('update', $movie)
+                <a href="{{ route('movies.edit', $movie) }}" class="btn btn-warning">Редагувати</a>
+            @endcan
             <a href="{{ route('movies.index') }}" class="btn btn-secondary">До списку</a>
         </div>
     </div>

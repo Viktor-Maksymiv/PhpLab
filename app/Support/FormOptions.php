@@ -46,10 +46,11 @@ class FormOptions
             ]);
     }
 
-    public static function orders(): Collection
+    public static function orders(?User $user = null): Collection
     {
         return Order::query()
             ->with('customer:id,name')
+            ->when($user !== null && ! $user->isStaff(), fn ($query) => $query->where('user_id', $user->id))
             ->orderByDesc('id')
             ->get()
             ->mapWithKeys(fn (Order $order) => [$order->id => "#{$order->id}, {$order->customer->name}"]);
